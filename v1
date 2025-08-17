@@ -1,0 +1,96 @@
+import json
+import time
+import requests
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+from playwright.sync_api import sync_playwright
+
+# --- CONFIG ---
+LUNARCRUSH_START_URL = "https://lunarcrush.com/categories/cryptocurrencies"
+TOPIC_TICKER = "solana"  # change if needed
+
+SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1tz0ZoAPpO5gwf0h_0A8MvhTBPni8aMfznWpFRyn1unY/edit#gid=0"
+SHEET_NAME = "Cryptocurrencies"
+# ---------------
+
+
+def capture_bearer_token(timeout_ms=60000) -> str | None:
+    """Opens LunarCrush and captures Bearer token from responses."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=False)
+        context = browser.new_context()
+        page = context.new_page()
+        token_container = {"token": None}
+
+        def on_response(resp):
+            try:
+                headers = resp.request.headers
+                auth = headers.get("authorization") or headers.get("Authorization")
+                if auth and auth.startswith("Bearer "):
+                    token_container["token"] = auth.split(" ", 1)[1]
+            except Exception:
+                pass
+
+        page.on("response", on_response)
+        page.goto(LUNARCRUSH_START_URL, wait_until="domcontentloaded")
+
+        # Wait until token found or timeout
+        end_time = time.time() + (timeout_ms / 1000.0)
+        while time.time() < end_time and not token_container["token"]:
+            page.wait_for_timeout(1000)
+
+        browser.close()
+        return token_container["token"]
+
+
+
+def fetch_topic_with_token(token: str, ticker: str) -> dict:
+    """Fetches topic data using the token (kept in case needed)."""
+    url = f"https://lunarcrush.com/api3/storm/topic/{ticker}"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "*/*",
+        "User-Agent": "Mozilla/5.0",
+        "X-Lunar-Client": "yolo",
+    }
+    r = requests.get(url, headers=headers, timeout=30)
+    r.raise_for_status()
+    return r.json()
+
+
+def update_google_sheet(token: str):
+    """Update Google Sheet with only token (B1) and current time (B2)."""
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
+    client = gspread.authorize(creds)
+    sheet = client.open_by_url(SPREADSHEET_URL).worksheet(SHEET_NAME)
+
+    # Clear B1 and B2 before writing new values
+    sheet.update(values=[[""]], range_name="B1")
+    sheet.update(values=[[""]], range_name="B2")
+
+    # Write token and current time
+    sheet.update(values=[[token]], range_name="B1")
+    sheet.update(values=[[time.strftime("%Y-%m-%d %H:%M:%S")]], range_name="B2")
+
+
+def run_once():
+    print("🔍 Capturing fresh token via browser...")
+    token = capture_bearer_token(timeout_ms=60000)
+    if not token:
+        print("❌ Failed to capture token.")
+        return
+
+    update_google_sheet(token)
+    print(f"✅ Updated Google Sheet at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+
+
+def main():
+    while True:
+        run_once()
+        print("⏳ Sleeping 24 hours...")
+        time.sleep(24 * 60 * 60)
+
+
+if __name__ == "__main__":
+    main()
