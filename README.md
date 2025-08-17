@@ -38,9 +38,16 @@ It uses:
 v0 -  [📁 Source Code](https://github.com/deepakdhaka-1/lunarcrush/blob/main/v0).
 ---
 ---
+## The `v1 & v1.1`
+- Majority Data Scraping into Google sheet Real Time with top news (supported by window version and linux version)
+---
+v1 -  [📁 Window Version](https://github.com/deepakdhaka-1/lunarcrush/blob/main/v1.py).
+---
+v1.1 -  [📁 Linux Version](https://github.com/deepakdhaka-1/lunarcrush/blob/main/v1.1.py).
 
 ## ⚡ Installation
 1️⃣ Clone the repo:
 ```bash
-git clone https://github.com/yourusername/lunarcrush-token-updater.git
-cd lunarcrush-token-updater
+git clone [https://github.com/deepakdhaka-1/lunarcrush/
+cd lunarcrush
+```
