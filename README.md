@@ -35,7 +35,7 @@ It uses:
 ## The `v0`
 - Automatic Generation of Auth Token and adding it in Google Sheet using Google Service Account.
 ---
-v0 -  [📁 Source Code](https://github.com/deepakdhaka-1/LUNARCRUSH/blob/main/v0).
+v0 -  [📁 Source Code](https://github.com/deepakdhaka-1/lunarcrush/blob/main/v0).
 ---
 ---
 
