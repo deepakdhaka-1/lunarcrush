@@ -491,7 +491,7 @@ def run_once():
 
     # Read tickers from A4+
     raw_tickers = ticker_ws.col_values(1)
-    tickers = [t.strip() for t in raw_tickers[3:] if t.strip()]
+    tickers = [t.strip() for t in raw_tickers[1:] if t.strip()]
     if not tickers:
         log_warn("No tickers found in Tickers sheet (A4+). Exiting run.")
         return
